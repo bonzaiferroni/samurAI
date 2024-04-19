@@ -1,5 +1,5 @@
 import { bodyBuild } from "../../utils/BodyBuilder";
-import { RoomQuest } from "./RoomQuest";
+import { RoomQuest } from "./abstract/RoomQuest";
 
 export interface ForageMemory {
     sourceId: Id<Source>;
@@ -9,7 +9,7 @@ export interface ForageMemory {
 
 export class Forage extends RoomQuest {
 
-    constructor(
+    protected constructor(
         roomName: string,
         source: Source | null,
         public index: number,
@@ -26,7 +26,7 @@ export class Forage extends RoomQuest {
         }
     }
 
-    advance() {
+    protected advance(): void {
         const foragerName = `forager-${this.index}`;
         const pollinatorName = `pollinator-${this.index}`;
         const forager = Game.creeps[foragerName];
@@ -54,10 +54,11 @@ export class Forage extends RoomQuest {
         }
     }
 
-    advanceFlowers() {
+    protected advanceFlowers(): void {
+        // TODO: this
     }
 
-    advanceForager(forager: Creep, source: Source) {
+    protected advanceForager(forager: Creep, source: Source): void {
         if (forager.pos.isNearTo(source)) {
             if (forager.store.energy < forager.store.getCapacity()) {
                 const droppedEnergy = forager.pos.lookFor(LOOK_ENERGY)[0];
@@ -78,15 +79,11 @@ export class Forage extends RoomQuest {
         pollinator: Creep & { memory: { hasPollen: boolean, targetId: Id<Flower> | null } },
         forager: Creep,
         flowers: Flower[]
-    ) {
-        const target = flowers[0];
-        if (target) {
-            pollinator.transfer(target, RESOURCE_ENERGY);
-        }
+    ): void {
         if (pollinator.memory.hasPollen) {
             if (pollinator.store.energy > 0) {
                 if (pollinator.memory.targetId) {
-                    let target = Game.getObjectById(pollinator.memory.targetId);
+                    let target: Flower | null = Game.getObjectById(pollinator.memory.targetId);
                     while (target) {
                         if (target.store.energy === target.store.getCapacity(RESOURCE_ENERGY)) {
                             const emptyFlowers = flowers
@@ -97,11 +94,11 @@ export class Forage extends RoomQuest {
 
                         const result = pollinator.transfer(target, RESOURCE_ENERGY);
                         switch (result) {
-                            case OK:
-                                break;
-                            case ERR_NOT_IN_RANGE:
-                                pollinator.moveTo(target);
-                                break;
+                        case OK:
+                            break;
+                        case ERR_NOT_IN_RANGE:
+                            pollinator.moveTo(target);
+                            break;
                         }
                     }
                 }
